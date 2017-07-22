@@ -4,6 +4,7 @@ import numpy as np
 import pickle
 import cv2
 from scipy.ndimage.measurements import label
+from skimage.feature import hog
 
 
 def add_heat(heatmap, bbox_list):
@@ -36,6 +37,22 @@ def draw_labeled_bboxes(img, labels):
         cv2.rectangle(img, bbox[0], bbox[1], (0,0,255), 6)
     # Return the image
     return img
+
+# Define a function to return HOG features and visualization
+def get_hog_features(img, orient, pix_per_cell, cell_per_block,
+                     vis=False, feature_vec=True):
+    # Call with two outputs if vis==True
+    if vis == True:
+        features, hog_image = hog(img, orientations=orient, pixels_per_cell=(pix_per_cell, pix_per_cell),
+                                  cells_per_block=(cell_per_block, cell_per_block), transform_sqrt=True,
+                                  visualise=vis, feature_vector=feature_vec)
+        return features, hog_image
+    # Otherwise call with one output
+    else:
+        features = hog(img, orientations=orient, pixels_per_cell=(pix_per_cell, pix_per_cell),
+                       cells_per_block=(cell_per_block, cell_per_block), transform_sqrt=True,
+                       visualise=vis, feature_vector=feature_vec)
+        return features
 
 # Define a single function that can extract features using hog sub-sampling and make predictions
 def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
