@@ -1,5 +1,6 @@
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
+import cv2
 
 def plot_images (images, table_size, fig_size = (10, 10), cmap=None, titles=None, fontsize=16):
     """Shows images in a table
@@ -30,3 +31,30 @@ def plot_images (images, table_size, fig_size = (10, 10), cmap=None, titles=None
                 imtable [j][i].set_title (titles [im_idx], fontsize=fontsize)
 
     plt.show ()
+
+
+
+def convert_colorspace(image, cspace='RGB', channel='ALL'):
+    """Converts image to a selected color space
+        Args:
+        image: input images
+        cspace (string): color space
+        channel (int or string): 'ALL' channels or channel number
+        """
+    # apply color conversion if other than 'RGB'
+    if cspace != 'RGB':
+        if cspace == 'HSV':
+            conv_img = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+        elif cspace == 'LUV':
+            conv_img = cv2.cvtColor(image, cv2.COLOR_RGB2LUV)
+        elif cspace == 'HLS':
+            conv_img = cv2.cvtColor(image, cv2.COLOR_RGB2HLS)
+        elif cspace == 'YUV':
+            conv_img = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
+        elif cspace == 'YCrCb':
+            conv_img = cv2.cvtColor(image, cv2.COLOR_RGB2YCrCb)
+    else: conv_img = np.copy(image)
+    if channel == 'ALL':
+        return conv_img
+    else:
+        return conv_img [:,:,channel]
