@@ -128,10 +128,10 @@ def extract_features(imgs, color_space='RGB', spatial_size=(32, 32),
     # Create a list to append feature vectors to
     features = []
     # Iterate through the list of images
-    for file in imgs:
+    for image in imgs:
         file_features = []
         # Read in each one by one
-        image = mpimg.imread(file)
+        #image = mpimg.imread(file)
         # apply color conversion if other than 'RGB'
         if color_space != 'RGB':
             if color_space == 'HSV':
@@ -144,6 +144,8 @@ def extract_features(imgs, color_space='RGB', spatial_size=(32, 32),
                 feature_image = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
             elif color_space == 'YCrCb':
                 feature_image = cv2.cvtColor(image, cv2.COLOR_RGB2YCrCb)
+            elif color_space == 'GRAY':
+                feature_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
         else: feature_image = np.copy(image)
         
         if spatial_feat == True:
@@ -156,12 +158,16 @@ def extract_features(imgs, color_space='RGB', spatial_size=(32, 32),
         if hog_feat == True:
             # Call get_hog_features() with vis=False, feature_vec=True
             if hog_channel == 'ALL':
-                hog_features = []
-                for channel in range(feature_image.shape[2]):
-                    hog_features.append(get_hog_features(feature_image[:,:,channel],
-                                                         orient, pix_per_cell, cell_per_block,
-                                                         vis=False, feature_vec=True))
-                hog_features = np.ravel(hog_features)
+                if color_space == 'GRAY':
+                    hog_features = get_hog_features(feature_image, orient,
+                                                    pix_per_cell, cell_per_block, vis=False, feature_vec=True)
+                else:
+                    hog_features = []
+                    for channel in range(feature_image.shape[2]):
+                        hog_features.append(get_hog_features(feature_image[:,:,channel],
+                                                             orient, pix_per_cell, cell_per_block,
+                                                             vis=False, feature_vec=True))
+                    hog_features = np.ravel(hog_features)
             else:
                 hog_features = get_hog_features(feature_image[:,:,hog_channel], orient,
                                                 pix_per_cell, cell_per_block, vis=False, feature_vec=True)
