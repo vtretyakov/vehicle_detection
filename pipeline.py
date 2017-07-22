@@ -14,7 +14,8 @@ from skimage.feature import hog
 from sklearn.model_selection import train_test_split
 
 #from class_functions import add_heat
-from class_functions import extract_features
+from class_functions import extract_features, get_hog_features
+from utils import *
 
 #image = mpimg.imread('test_images/test1.jpg')
 
@@ -42,18 +43,40 @@ notcar_images_count = len(notcar_images)
 print ('dataset has cars:', car_images_count)
 print ('and not cars:', notcar_images_count)
 
-random_img_nr = randint(0, car_images_count-1)
-plt.subplot(2, 2, 1)
-plt.imshow(car_images[random_img_nr])
-plt.title('A car image example')
-plt.axis('off')
-random_img_nr = randint(0, notcar_images_count-1)
-plt.subplot(2, 2, 2)
-plt.imshow(notcar_images[random_img_nr])
-plt.title('Not a car image example')
-plt.axis('off')
-#plt.subplot_tool()
-plt.show()
+# create a small subset of images for visualization
+example_images = []
+titles = []
+for i in range(0,4):
+    example_images.append(car_images[randint(0, car_images_count-1)])
+    titles.append("car")
+for i in range(0,4):
+    example_images.append(notcar_images[randint(0, notcar_images_count-1)])
+    titles.append("not car")
 
+plot_images(example_images, (4, 2), fig_size=(10, 5),titles=titles)
+
+# parameters of feature extraction
+color_space = 'GRAY' # Can be GRAY, RGB, HSV, LUV, HLS, YUV, YCrCb
+orient = 8  # HOG orientations
+pix_per_cell = 16 # HOG pixels per cell
+cell_per_block = 1 # HOG cells per block
+hog_channel = 'ALL' # Can be 0, 1, 2, or "ALL"
+spatial_size = (16, 16) # Spatial binning dimensions
+hist_bins = 16    # Number of histogram bins
+spatial_feat = False # Spatial features on or off
+hist_feat = False # Histogram features on or off
+hog_feat = True # HOG features on or off
+
+# subsample examples for extracting hog features
+images_for_features = list (example_images [1:-1])
+
+hog_features_examples = []
+hog_features_examples.extend (images_for_features)
+
+for img in images_for_features:
+    features, hog_image = get_hog_features(convert_colorspace(img,cspace='HLS',channel=2), orient, pix_per_cell, cell_per_block, vis=True)
+    hog_features_examples.append (hog_image)
+
+plot_images(hog_features_examples, (6, 2), fig_size=(20, 6))
 
 
