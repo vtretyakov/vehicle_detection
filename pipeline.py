@@ -20,7 +20,6 @@ from utils import *
 #image = mpimg.imread('test_images/test1.jpg')
 show_plot = False
 
-
 # Read in cars and notcars
 #cars = glob.glob('training_data/vehicles/**/*.png', recursive=True)
 #notcars = glob.glob('training_data/non-vehicles/**/*.png', recursive=True)
@@ -30,12 +29,18 @@ notcars = glob.glob('training_data_subset/non-vehicles_smallset/**/*.jpeg', recu
 # load car images
 car_images = []
 for image_path in cars:
-    car_images.append (mpimg.imread(image_path))
+    image = mpimg.imread(image_path)
+    if image_path.endswith('.png'):
+        image = image.astype(np.float32)/255
+    car_images.append(image)
 
 # load non-car images
 notcar_images = []
 for image_path in notcars:
-    notcar_images.append (mpimg.imread(image_path))
+    image = mpimg.imread(image_path)
+    if image_path.endswith('.png'):
+        image = image.astype(np.float32)/255
+    notcar_images.append(image)
 
 car_images_count = len(car_images)
 notcar_images_count = len(notcar_images)
