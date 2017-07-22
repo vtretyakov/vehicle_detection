@@ -7,7 +7,7 @@ import glob
 import time
 from random import randint
 from scipy.ndimage.measurements import label
-from sklearn.svm import LinearSVC
+from sklearn.svm import LinearSVC, SVC
 from sklearn.preprocessing import StandardScaler
 from skimage.feature import hog
 #from class_functions import *
@@ -18,7 +18,7 @@ from class_functions import extract_features, get_hog_features
 from utils import *
 
 #image = mpimg.imread('test_images/test1.jpg')
-
+show_plot = False
 
 
 # Read in cars and notcars
@@ -53,10 +53,11 @@ for i in range(0,4):
     example_images.append(notcar_images[randint(0, notcar_images_count-1)])
     titles.append("not car")
 
-plot_images(example_images, (4, 2), fig_size=(10, 5),titles=titles)
+if show_plot == True:
+    plot_images(example_images, (4, 2), fig_size=(10, 5),titles=titles)
 
 # parameters of feature extraction
-color_space = 'GRAY' # Can be GRAY, RGB, HSV, LUV, HLS, YUV, YCrCb
+color_space = 'HLS' # Can be GRAY, RGB, HSV, LUV, HLS, YUV, YCrCb
 orient = 8  # HOG orientations
 pix_per_cell = 16 # HOG pixels per cell
 cell_per_block = 1 # HOG cells per block
@@ -77,6 +78,50 @@ for img in images_for_features:
     features, hog_image = get_hog_features(convert_colorspace(img,cspace='HLS',channel=2), orient, pix_per_cell, cell_per_block, vis=True)
     hog_features_examples.append (hog_image)
 
-plot_images(hog_features_examples, (6, 2), fig_size=(20, 6))
+if show_plot == True:
+    plot_images(hog_features_examples, (6, 2), fig_size=(20, 6))
+
+car_features = extract_features(car_images, color_space=color_space,
+                                spatial_size=spatial_size, hist_bins=hist_bins,
+                                orient=orient, pix_per_cell=pix_per_cell,
+                                cell_per_block=cell_per_block,
+                                hog_channel=hog_channel, spatial_feat=spatial_feat,
+                                hist_feat=hist_feat, hog_feat=hog_feat)
+notcar_features = extract_features(notcar_images, color_space=color_space,
+                                   spatial_size=spatial_size, hist_bins=hist_bins,
+                                   orient=orient, pix_per_cell=pix_per_cell,
+                                   cell_per_block=cell_per_block,
+                                   hog_channel=hog_channel, spatial_feat=spatial_feat,
+                                   hist_feat=hist_feat, hog_feat=hog_feat)
+
+# Create an array stack, NOTE: StandardScaler() expects np.float64
+X = np.vstack((car_features, notcar_features)).astype(np.float64)
+# Fit a per-column scaler
+X_scaler = StandardScaler().fit(X)
+# Apply the scaler to X
+scaled_X = X_scaler.transform(X)
+
+# Define the labels vector
+y = np.hstack((np.ones(len(car_features)), np.zeros(len(notcar_features))))
+
+# Split up data into randomized training and test sets
+random_state = randint(0, 100)
+X_train, X_test, y_train, y_test = train_test_split(scaled_X, y, test_size=0.2, random_state=random_state)
+
+print('Using:',orient,'orientations',pix_per_cell,
+      'pixels per cell and', cell_per_block,'cell(s) per block')
+print('Feature vector length:', len(X_train[0]))
+
+# Use a linear SVC
+svc = LinearSVC()
+# Check the training time for the SVC
+t=time.time()
+svc.fit(X_train, y_train)
+t2 = time.time()
+print(round(t2-t, 2), 'Seconds to train SVC...')
+# Check the score of the SVC
+print('Test Accuracy of SVC = ', round(svc.score(X_test, y_test), 4))
+# Check the prediction time for a single sample
+t=time.time()
 
 
