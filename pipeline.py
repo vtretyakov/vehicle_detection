@@ -5,6 +5,7 @@ import pickle
 import cv2
 import glob
 import time
+import collections
 from random import randint
 from scipy.ndimage.measurements import label
 from skimage.feature import hog
@@ -16,14 +17,14 @@ from sklearn.preprocessing import StandardScaler
 from scipy.ndimage.measurements import label
 from moviepy.editor import VideoFileClip
 
-show_plot = False
-record_video = True
+show_plot = True
+record_video = False
 
 # Read in cars and notcars
-cars = glob.glob('training_data/vehicles/**/*.png', recursive=True)
-notcars = glob.glob('training_data/non-vehicles/**/*.png', recursive=True)
-#cars = glob.glob('training_data_subset/vehicles_smallset/**/*.jpeg', recursive=True)
-#notcars = glob.glob('training_data_subset/non-vehicles_smallset/**/*.jpeg', recursive=True)
+#cars = glob.glob('training_data/vehicles/**/*.png', recursive=True)
+#notcars = glob.glob('training_data/non-vehicles/**/*.png', recursive=True)
+cars = glob.glob('training_data_subset/vehicles_smallset/**/*.jpeg', recursive=True)
+notcars = glob.glob('training_data_subset/non-vehicles_smallset/**/*.jpeg', recursive=True)
 
 # load car images
 car_images = []
@@ -37,13 +38,17 @@ for image_path in cars:
 
 # load non-car images
 notcar_images = []
+
 for image_path in notcars:
     if image_path.endswith('.png'):
         image = cv2.imread(image_path)
+        augmented_image = cv2.flip(image,1)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     else:
         image = mpimg.imread(image_path)
+        augmented_image = cv2.flip(image,1)
     notcar_images.append(image)
+    notcar_images.append(augmented_image)
 
 car_images_count = len(car_images)
 notcar_images_count = len(notcar_images)
@@ -141,6 +146,14 @@ print('Test Accuracy of SVC = ', round(svc.score(X_test, y_test), 4))
 t=time.time()
 
 
+def running_average(buffer, current_value):
+    buffer.append(current_value)
+    average = np.zeros((720, 1280)).astype(np.float)
+    for i in range(len(buffer)):
+        average += buffer[i]
+    average = average/len(buffer)
+    return average
+
 #define sliding window search parameters
 ystarts = [ 400, 400, 450]
 ystops =  [ 500, 550, 656]
@@ -162,11 +175,11 @@ def process_image(image):
     #plt.show ()
     
     #shape = image.shape[0], image.shape[1]
-    #heat = np.zeros(image.shape)
     heat = np.zeros_like(image[:,:,0]).astype(np.float)
 
     # Add heat to each box in box list
     heat = add_heat(heat,car_boxes)
+    heat = running_average(heat_buffer, heat)
 
     # Apply threshold to help remove false positives
     heat = apply_threshold(heat,2)
@@ -176,6 +189,16 @@ def process_image(image):
 
     # Find final boxes from heatmap using label function
     labels = label(heatmap)
+ 
+    if record_video == False:
+        for car_number in range(1, labels[1]+1):
+            # Find pixels with each car_number label value
+            nonzero = (labels[0] == car_number).nonzero()
+            # Identify x and y values of those pixels
+            nonzeroy = np.array(nonzero[0])
+            nonzerox = np.array(nonzero[1])
+            print (nonzeroy,nonzerox)
+
     
     draw_img = draw_labeled_bboxes(np.copy(image), labels)
 
@@ -195,7 +218,10 @@ if record_video == True:
 else:
     #load test image
     image = mpimg.imread('test_images/test5.jpg')
-    draw_img, heatmap = process_image(image)
+    for i in range(0,20):
+        draw_img, heatmap = process_image(image)
+
+    
 
     fig = plt.figure()
     plt.subplot(121)
