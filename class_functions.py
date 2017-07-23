@@ -8,11 +8,12 @@ from skimage.feature import hog
 
 
 def add_heat(heatmap, bbox_list):
+    x_margin, y_margin = 10, 5  # margin around detected picture to include edges
     # Iterate through list of bboxes
     for box in bbox_list:
         # Add += 1 for all pixels inside each bbox
         # Assuming each "box" takes the form ((x1, y1), (x2, y2))
-        heatmap[box[0][1]:box[1][1], box[0][0]:box[1][0]] += 1
+        heatmap[box[0][1]-y_margin:box[1][1]+y_margin, box[0][0]-x_margin:box[1][0]+x_margin] += 1
     
     # Return updated heatmap
     return heatmap# Iterate through list of bboxes
