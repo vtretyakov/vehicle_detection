@@ -58,11 +58,11 @@ if show_plot == True:
     plot_images(example_images, (4, 2), fig_size=(10, 5),titles=titles)
 
 # parameters of feature extraction
-color_space = 'GRAY' # Can be GRAY, RGB, HSV, LUV, HLS, YUV, YCrCb
+color_space = 'HLS' # Can be GRAY, RGB, HSV, LUV, HLS, YUV, YCrCb
 orient = 16  # HOG orientations
 pix_per_cell = 16 # HOG pixels per cell
 cell_per_block = 1 # HOG cells per block
-hog_channel = 'ALL' # Can be 0, 1, 2, or "ALL"
+hog_channel = 2 # Can be 0, 1, 2, or "ALL"
 spatial_size = (16, 16) # Spatial binning dimensions
 hist_bins = 16    # Number of histogram bins
 spatial_feat = True # Spatial features on or off

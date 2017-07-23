@@ -193,9 +193,16 @@ def find_cars(img, color_space, ystarts, ystops, scales, svc, X_scaler, hog_chan
     
         # Compute individual channel HOG features for the entire image
         if (len(ctrans_tosearch.shape) == 3):
-            hog1 = get_hog_features(ch1, orient, pix_per_cell, cell_per_block, feature_vec=False)
-            hog2 = get_hog_features(ch2, orient, pix_per_cell, cell_per_block, feature_vec=False)
-            hog3 = get_hog_features(ch3, orient, pix_per_cell, cell_per_block, feature_vec=False)
+            if hog_channel == 'ALL':
+                hog1 = get_hog_features(ch1, orient, pix_per_cell, cell_per_block, feature_vec=False)
+                hog2 = get_hog_features(ch2, orient, pix_per_cell, cell_per_block, feature_vec=False)
+                hog3 = get_hog_features(ch3, orient, pix_per_cell, cell_per_block, feature_vec=False)
+            elif hog_channel == 0:
+                hog1 = get_hog_features(ch1, orient, pix_per_cell, cell_per_block, feature_vec=False)
+            elif hog_channel == 1:
+                hog1 = get_hog_features(ch2, orient, pix_per_cell, cell_per_block, feature_vec=False)
+            elif hog_channel == 2:
+                hog1 = get_hog_features(ch3, orient, pix_per_cell, cell_per_block, feature_vec=False)
         elif (len(ctrans_tosearch.shape) == 2):
             hog1 = get_hog_features(ch1, orient, pix_per_cell, cell_per_block, feature_vec=False)
 
@@ -206,10 +213,13 @@ def find_cars(img, color_space, ystarts, ystops, scales, svc, X_scaler, hog_chan
                 xpos = xb*cells_per_step
                 # Extract HOG for this patch
                 if (len(ctrans_tosearch.shape) == 3):
-                    hog_feat1 = hog1[ypos:ypos+nblocks_per_window, xpos:xpos+nblocks_per_window].ravel()
-                    hog_feat2 = hog2[ypos:ypos+nblocks_per_window, xpos:xpos+nblocks_per_window].ravel()
-                    hog_feat3 = hog3[ypos:ypos+nblocks_per_window, xpos:xpos+nblocks_per_window].ravel()
-                    hog_features = np.hstack((hog_feat1, hog_feat2, hog_feat3))
+                    if hog_channel == 'ALL':
+                        hog_feat1 = hog1[ypos:ypos+nblocks_per_window, xpos:xpos+nblocks_per_window].ravel()
+                        hog_feat2 = hog2[ypos:ypos+nblocks_per_window, xpos:xpos+nblocks_per_window].ravel()
+                        hog_feat3 = hog3[ypos:ypos+nblocks_per_window, xpos:xpos+nblocks_per_window].ravel()
+                        hog_features = np.hstack((hog_feat1, hog_feat2, hog_feat3))
+                    else:
+                        hog_features = hog1[ypos:ypos+nblocks_per_window, xpos:xpos+nblocks_per_window].ravel()
                 elif (len(ctrans_tosearch.shape) == 2):
                     hog_features = hog1[ypos:ypos+nblocks_per_window, xpos:xpos+nblocks_per_window].ravel()
             
