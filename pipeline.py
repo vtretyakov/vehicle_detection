@@ -7,17 +7,13 @@ import glob
 import time
 from random import randint
 from scipy.ndimage.measurements import label
+from skimage.feature import hog
+from class_functions import *
+from utils import *
+from sklearn.model_selection import train_test_split
 from sklearn.svm import LinearSVC, SVC
 from sklearn.preprocessing import StandardScaler
-from skimage.feature import hog
-#from class_functions import *
-from sklearn.model_selection import train_test_split
 
-#from class_functions import add_heat
-from class_functions import extract_features, get_hog_features
-from utils import *
-
-#image = mpimg.imread('test_images/test1.jpg')
 show_plot = False
 
 # Read in cars and notcars
@@ -63,14 +59,14 @@ if show_plot == True:
 
 # parameters of feature extraction
 color_space = 'HLS' # Can be GRAY, RGB, HSV, LUV, HLS, YUV, YCrCb
-orient = 8  # HOG orientations
+orient = 16  # HOG orientations
 pix_per_cell = 16 # HOG pixels per cell
 cell_per_block = 1 # HOG cells per block
 hog_channel = 'ALL' # Can be 0, 1, 2, or "ALL"
 spatial_size = (16, 16) # Spatial binning dimensions
 hist_bins = 16    # Number of histogram bins
-spatial_feat = False # Spatial features on or off
-hist_feat = False # Histogram features on or off
+spatial_feat = True # Spatial features on or off
+hist_feat = True # Histogram features on or off
 hog_feat = True # HOG features on or off
 
 # subsample examples for extracting hog features
@@ -129,4 +125,21 @@ print('Test Accuracy of SVC = ', round(svc.score(X_test, y_test), 4))
 # Check the prediction time for a single sample
 t=time.time()
 
+#load test image
+image = mpimg.imread('test_images/test1.jpg')
+
+#define sliding window search parameters
+ystarts = [ 400, 400 ]
+ystops =  [ 656, 656 ]
+scales =  [ 1. , 2.  ]
+
+car_boxes = find_cars(image, ystarts, ystops, scales, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+
+#draw boxes
+out_img = np.copy(image)
+for c1, c2 in car_boxes:
+    cv2.rectangle(out_img, c1, c2, (0,0,255), 6)
+
+plt.imshow(out_img)
+plt.show ()
 
