@@ -14,29 +14,35 @@ from sklearn.model_selection import train_test_split
 from sklearn.svm import LinearSVC, SVC
 from sklearn.preprocessing import StandardScaler
 from scipy.ndimage.measurements import label
+from moviepy.editor import VideoFileClip
 
 show_plot = False
+record_video = True
 
 # Read in cars and notcars
-#cars = glob.glob('training_data/vehicles/**/*.png', recursive=True)
-#notcars = glob.glob('training_data/non-vehicles/**/*.png', recursive=True)
-cars = glob.glob('training_data_subset/vehicles_smallset/**/*.jpeg', recursive=True)
-notcars = glob.glob('training_data_subset/non-vehicles_smallset/**/*.jpeg', recursive=True)
+cars = glob.glob('training_data/vehicles/**/*.png', recursive=True)
+notcars = glob.glob('training_data/non-vehicles/**/*.png', recursive=True)
+#cars = glob.glob('training_data_subset/vehicles_smallset/**/*.jpeg', recursive=True)
+#notcars = glob.glob('training_data_subset/non-vehicles_smallset/**/*.jpeg', recursive=True)
 
 # load car images
 car_images = []
 for image_path in cars:
-    image = mpimg.imread(image_path)
     if image_path.endswith('.png'):
-        image = image.astype(np.float32)/255
+        image = cv2.imread(image_path)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    else:
+        image = mpimg.imread(image_path)
     car_images.append(image)
 
 # load non-car images
 notcar_images = []
 for image_path in notcars:
-    image = mpimg.imread(image_path)
     if image_path.endswith('.png'):
-        image = image.astype(np.float32)/255
+        image = cv2.imread(image_path)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    else:
+        image = mpimg.imread(image_path)
     notcar_images.append(image)
 
 car_images_count = len(car_images)
@@ -59,25 +65,33 @@ if show_plot == True:
     plot_images(example_images, (4, 2), fig_size=(10, 5),titles=titles)
 
 # parameters of feature extraction
-color_space = 'HLS' # Can be GRAY, RGB, HSV, LUV, HLS, YUV, YCrCb
+color_space = 'GRAY' # Can be GRAY, RGB, HSV, LUV, HLS, YUV, YCrCb
 orient = 16  # HOG orientations
 pix_per_cell = 16 # HOG pixels per cell
 cell_per_block = 2 # HOG cells per block
 hog_channel = 'ALL' # Can be 0, 1, 2, or "ALL"
 spatial_size = (16, 16) # Spatial binning dimensions
-hist_bins = 16    # Number of histogram bins
+hist_bins = 32    # Number of histogram bins
 spatial_feat = True # Spatial features on or off
 hist_feat = True # Histogram features on or off
 hog_feat = True # HOG features on or off
 
 # subsample examples for extracting hog features
 images_for_features = list (example_images [1:-1])
+for i in range(len(images_for_features)):
+    if hog_channel == 'ALL':
+        channel = 0
+        print("Warning! 'ALL' option for displaying is not supported")
+    else:
+        channel = hog_channel
+    images_for_features[i] = convert_colorspace(images_for_features[i],cspace=color_space,channel=channel)
+
 
 hog_features_examples = []
 hog_features_examples.extend (images_for_features)
 
 for img in images_for_features:
-    features, hog_image = get_hog_features(convert_colorspace(img,cspace=color_space,channel=2), orient, pix_per_cell, cell_per_block, vis=True)
+    features, hog_image = get_hog_features(img, orient, pix_per_cell, cell_per_block, vis=True)
     hog_features_examples.append (hog_image)
 
 if show_plot == True:
@@ -126,46 +140,70 @@ print('Test Accuracy of SVC = ', round(svc.score(X_test, y_test), 4))
 # Check the prediction time for a single sample
 t=time.time()
 
-#load test image
-image = mpimg.imread('test_images/test1.jpg')
 
 #define sliding window search parameters
-ystarts = [ 400, 400, 400]
+ystarts = [ 400, 400, 450]
 ystops =  [ 500, 550, 656]
 scales =  [ 1.0, 1.5, 2.0]
+#ystarts = [ 400, 450]
+#ystops =  [ 500, 656]
+#scales =  [ 1.0, 2.0]
 
-car_boxes = find_cars(image, color_space, ystarts, ystops, scales, svc, X_scaler, hog_channel, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+def process_image(image):
 
-#draw boxes
-out_img = np.copy(image)
-for c1, c2 in car_boxes:
-    cv2.rectangle(out_img, c1, c2, (0,0,255), 6)
+    car_boxes = find_cars(image, color_space, ystarts, ystops, scales, svc, X_scaler, hog_channel, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
 
-plt.imshow(out_img)
-plt.show ()
+    #draw boxes
+    #out_img = np.copy(image)
+    #for c1, c2 in car_boxes:
+        #cv2.rectangle(out_img, c1, c2, (0,0,255), 6)
 
-heat = np.zeros_like(image[:,:,0]).astype(np.float)
+    #plt.imshow(out_img)
+    #plt.show ()
+    
+    #shape = image.shape[0], image.shape[1]
+    #heat = np.zeros(image.shape)
+    heat = np.zeros_like(image[:,:,0]).astype(np.float)
 
-# Add heat to each box in box list
-heat = add_heat(heat,car_boxes)
+    # Add heat to each box in box list
+    heat = add_heat(heat,car_boxes)
 
-# Apply threshold to help remove false positives
-heat = apply_threshold(heat,1)
+    # Apply threshold to help remove false positives
+    heat = apply_threshold(heat,2)
 
-# Visualize the heatmap when displaying
-heatmap = np.clip(heat, 0, 255)
+    # Visualize the heatmap when displaying
+    heatmap = np.clip(heat, 0, 255)
 
-# Find final boxes from heatmap using label function
-labels = label(heatmap)
-draw_img = draw_labeled_bboxes(np.copy(image), labels)
+    # Find final boxes from heatmap using label function
+    labels = label(heatmap)
+    
+    draw_img = draw_labeled_bboxes(np.copy(image), labels)
 
-fig = plt.figure()
-plt.subplot(121)
-plt.imshow(draw_img)
-plt.title('Car Positions')
-plt.subplot(122)
-plt.imshow(heatmap, cmap='hot')
-plt.title('Heat Map')
-fig.tight_layout()
-plt.show ()
+    if record_video == True:
+        return draw_img
+    else:
+        return draw_img, heatmap
+
+
+
+
+
+if record_video == True:
+    clip = VideoFileClip("project_video.mp4")#.subclip(38,43)#.subclip(20,25)
+    new_clip = clip.fl_image( process_image )
+    new_clip.write_videofile("project_video_processed.mp4", audio=False)
+else:
+    #load test image
+    image = mpimg.imread('test_images/test5.jpg')
+    draw_img, heatmap = process_image(image)
+
+    fig = plt.figure()
+    plt.subplot(121)
+    plt.imshow(draw_img)
+    plt.title('Car Positions')
+    plt.subplot(122)
+    plt.imshow(heatmap, cmap='hot')
+    plt.title('Heat Map')
+    fig.tight_layout()
+    plt.show ()
 
