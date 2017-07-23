@@ -13,6 +13,7 @@ from utils import *
 from sklearn.model_selection import train_test_split
 from sklearn.svm import LinearSVC, SVC
 from sklearn.preprocessing import StandardScaler
+from scipy.ndimage.measurements import label
 
 show_plot = False
 
@@ -61,8 +62,8 @@ if show_plot == True:
 color_space = 'HLS' # Can be GRAY, RGB, HSV, LUV, HLS, YUV, YCrCb
 orient = 16  # HOG orientations
 pix_per_cell = 16 # HOG pixels per cell
-cell_per_block = 1 # HOG cells per block
-hog_channel = 2 # Can be 0, 1, 2, or "ALL"
+cell_per_block = 2 # HOG cells per block
+hog_channel = 'ALL' # Can be 0, 1, 2, or "ALL"
 spatial_size = (16, 16) # Spatial binning dimensions
 hist_bins = 16    # Number of histogram bins
 spatial_feat = True # Spatial features on or off
@@ -76,7 +77,7 @@ hog_features_examples = []
 hog_features_examples.extend (images_for_features)
 
 for img in images_for_features:
-    features, hog_image = get_hog_features(convert_colorspace(img,cspace='HLS',channel=2), orient, pix_per_cell, cell_per_block, vis=True)
+    features, hog_image = get_hog_features(convert_colorspace(img,cspace=color_space,channel=2), orient, pix_per_cell, cell_per_block, vis=True)
     hog_features_examples.append (hog_image)
 
 if show_plot == True:
@@ -129,9 +130,9 @@ t=time.time()
 image = mpimg.imread('test_images/test1.jpg')
 
 #define sliding window search parameters
-ystarts = [ 400, 400 ]
-ystops =  [ 656, 656 ]
-scales =  [ 1. , 2.  ]
+ystarts = [ 400, 400, 400]
+ystops =  [ 500, 550, 656]
+scales =  [ 1.0, 1.5, 2.0]
 
 car_boxes = find_cars(image, color_space, ystarts, ystops, scales, svc, X_scaler, hog_channel, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
 
@@ -141,5 +142,30 @@ for c1, c2 in car_boxes:
     cv2.rectangle(out_img, c1, c2, (0,0,255), 6)
 
 plt.imshow(out_img)
+plt.show ()
+
+heat = np.zeros_like(image[:,:,0]).astype(np.float)
+
+# Add heat to each box in box list
+heat = add_heat(heat,car_boxes)
+
+# Apply threshold to help remove false positives
+heat = apply_threshold(heat,1)
+
+# Visualize the heatmap when displaying
+heatmap = np.clip(heat, 0, 255)
+
+# Find final boxes from heatmap using label function
+labels = label(heatmap)
+draw_img = draw_labeled_bboxes(np.copy(image), labels)
+
+fig = plt.figure()
+plt.subplot(121)
+plt.imshow(draw_img)
+plt.title('Car Positions')
+plt.subplot(122)
+plt.imshow(heatmap, cmap='hot')
+plt.title('Heat Map')
+fig.tight_layout()
 plt.show ()
 

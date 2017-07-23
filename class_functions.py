@@ -165,7 +165,6 @@ def find_cars(img, color_space, ystarts, ystops, scales, svc, X_scaler, hog_chan
     
     # Search for cars on various scales
     for scale, ystart, ystop in zip(scales,ystarts,ystops):
-        print("scale:",scale)
         img_tosearch = img[ystart:ystop,:,:]
         ctrans_tosearch = convert_color(img_tosearch, color_space=color_space)
         if scale != 1:
