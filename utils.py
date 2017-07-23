@@ -53,8 +53,10 @@ def convert_colorspace(image, cspace='RGB', channel='ALL'):
             conv_img = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
         elif cspace == 'YCrCb':
             conv_img = cv2.cvtColor(image, cv2.COLOR_RGB2YCrCb)
+        elif cspace == 'GRAY':
+            conv_img = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
     else: conv_img = np.copy(image)
-    if channel == 'ALL':
+    if channel == 'ALL' or cspace=='GRAY':
         return conv_img
     else:
         return conv_img [:,:,channel]
