@@ -58,7 +58,7 @@ if show_plot == True:
     plot_images(example_images, (4, 2), fig_size=(10, 5),titles=titles)
 
 # parameters of feature extraction
-color_space = 'HLS' # Can be GRAY, RGB, HSV, LUV, HLS, YUV, YCrCb
+color_space = 'GRAY' # Can be GRAY, RGB, HSV, LUV, HLS, YUV, YCrCb
 orient = 16  # HOG orientations
 pix_per_cell = 16 # HOG pixels per cell
 cell_per_block = 1 # HOG cells per block
@@ -133,7 +133,7 @@ ystarts = [ 400, 400 ]
 ystops =  [ 656, 656 ]
 scales =  [ 1. , 2.  ]
 
-car_boxes = find_cars(image, color_space, ystarts, ystops, scales, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+car_boxes = find_cars(image, color_space, ystarts, ystops, scales, svc, X_scaler, hog_channel, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
 
 #draw boxes
 out_img = np.copy(image)

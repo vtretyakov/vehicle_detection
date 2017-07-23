@@ -133,23 +133,30 @@ def convert_color(image, color_space='YCrCb'):
     return conveted_image
 
 def bin_spatial(img, size=(32, 32)):
-    color1 = cv2.resize(img[:,:,0], size).ravel()
-    color2 = cv2.resize(img[:,:,1], size).ravel()
-    color3 = cv2.resize(img[:,:,2], size).ravel()
-    return np.hstack((color1, color2, color3))
+    if (len(img.shape) == 3):
+        color1 = cv2.resize(img[:,:,0], size).ravel()
+        color2 = cv2.resize(img[:,:,1], size).ravel()
+        color3 = cv2.resize(img[:,:,2], size).ravel()
+        return np.hstack((color1, color2, color3))
+    elif (len(img.shape) == 2):
+        return cv2.resize(img, size).ravel()
 
 def color_hist(img, nbins=32):    #bins_range=(0, 256)
-    # Compute the histogram of the color channels separately
-    channel1_hist = np.histogram(img[:,:,0], bins=nbins)
-    channel2_hist = np.histogram(img[:,:,1], bins=nbins)
-    channel3_hist = np.histogram(img[:,:,2], bins=nbins)
-    # Concatenate the histograms into a single feature vector
-    hist_features = np.concatenate((channel1_hist[0], channel2_hist[0], channel3_hist[0]))
-    # Return the individual histograms, bin_centers and feature vector
-    return hist_features
+    if (len(img.shape) == 3):
+        # Compute the histogram of the color channels separately
+        channel1_hist = np.histogram(img[:,:,0], bins=nbins)
+        channel2_hist = np.histogram(img[:,:,1], bins=nbins)
+        channel3_hist = np.histogram(img[:,:,2], bins=nbins)
+        # Concatenate the histograms into a single feature vector
+        hist_features = np.concatenate((channel1_hist[0], channel2_hist[0], channel3_hist[0]))
+        # Return the individual histograms, bin_centers and feature vector
+        return hist_features
+    elif (len(img.shape) == 2):
+        hist_features = np.histogram(img, bins=nbins)
+        return hist_features[0]
 
 # Define a single function that can extract features using hog sub-sampling and make predictions
-def find_cars(img, color_space, ystarts, ystops, scales, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
+def find_cars(img, color_space, ystarts, ystops, scales, svc, X_scaler, hog_channel, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
     
     # Create a list of bounding boxes to identify cars
     car_boxes = []
@@ -165,9 +172,12 @@ def find_cars(img, color_space, ystarts, ystops, scales, svc, X_scaler, orient, 
             imshape = ctrans_tosearch.shape
             ctrans_tosearch = cv2.resize(ctrans_tosearch, (np.int(imshape[1]/scale), np.int(imshape[0]/scale)))
 
-        ch1 = ctrans_tosearch[:,:,0]
-        ch2 = ctrans_tosearch[:,:,1]
-        ch3 = ctrans_tosearch[:,:,2]
+        if (len(ctrans_tosearch.shape) == 3):
+            ch1 = ctrans_tosearch[:,:,0]
+            ch2 = ctrans_tosearch[:,:,1]
+            ch3 = ctrans_tosearch[:,:,2]
+        elif (len(ctrans_tosearch.shape) == 2):
+            ch1 = ctrans_tosearch
 
         # Define blocks and steps as above
         nxblocks = (ch1.shape[1] // pix_per_cell) - cell_per_block + 1
@@ -182,19 +192,26 @@ def find_cars(img, color_space, ystarts, ystops, scales, svc, X_scaler, orient, 
         nysteps = (nyblocks - nblocks_per_window) // cells_per_step
     
         # Compute individual channel HOG features for the entire image
-        hog1 = get_hog_features(ch1, orient, pix_per_cell, cell_per_block, feature_vec=False)
-        hog2 = get_hog_features(ch2, orient, pix_per_cell, cell_per_block, feature_vec=False)
-        hog3 = get_hog_features(ch3, orient, pix_per_cell, cell_per_block, feature_vec=False)
+        if (len(ctrans_tosearch.shape) == 3):
+            hog1 = get_hog_features(ch1, orient, pix_per_cell, cell_per_block, feature_vec=False)
+            hog2 = get_hog_features(ch2, orient, pix_per_cell, cell_per_block, feature_vec=False)
+            hog3 = get_hog_features(ch3, orient, pix_per_cell, cell_per_block, feature_vec=False)
+        elif (len(ctrans_tosearch.shape) == 2):
+            hog1 = get_hog_features(ch1, orient, pix_per_cell, cell_per_block, feature_vec=False)
+
     
         for xb in range(nxsteps):
             for yb in range(nysteps):
                 ypos = yb*cells_per_step
                 xpos = xb*cells_per_step
                 # Extract HOG for this patch
-                hog_feat1 = hog1[ypos:ypos+nblocks_per_window, xpos:xpos+nblocks_per_window].ravel()
-                hog_feat2 = hog2[ypos:ypos+nblocks_per_window, xpos:xpos+nblocks_per_window].ravel()
-                hog_feat3 = hog3[ypos:ypos+nblocks_per_window, xpos:xpos+nblocks_per_window].ravel()
-                hog_features = np.hstack((hog_feat1, hog_feat2, hog_feat3))
+                if (len(ctrans_tosearch.shape) == 3):
+                    hog_feat1 = hog1[ypos:ypos+nblocks_per_window, xpos:xpos+nblocks_per_window].ravel()
+                    hog_feat2 = hog2[ypos:ypos+nblocks_per_window, xpos:xpos+nblocks_per_window].ravel()
+                    hog_feat3 = hog3[ypos:ypos+nblocks_per_window, xpos:xpos+nblocks_per_window].ravel()
+                    hog_features = np.hstack((hog_feat1, hog_feat2, hog_feat3))
+                elif (len(ctrans_tosearch.shape) == 2):
+                    hog_features = hog1[ypos:ypos+nblocks_per_window, xpos:xpos+nblocks_per_window].ravel()
             
                 xleft = xpos*pix_per_cell
                 ytop = ypos*pix_per_cell
