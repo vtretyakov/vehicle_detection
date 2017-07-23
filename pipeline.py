@@ -133,7 +133,7 @@ ystarts = [ 400, 400 ]
 ystops =  [ 656, 656 ]
 scales =  [ 1. , 2.  ]
 
-car_boxes = find_cars(image, ystarts, ystops, scales, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+car_boxes = find_cars(image, color_space, ystarts, ystops, scales, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
 
 #draw boxes
 out_img = np.copy(image)

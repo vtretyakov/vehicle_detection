@@ -113,13 +113,24 @@ def draw_boxes(img, bboxes, color=(0, 0, 255), thick=6):
     # Return the image copy with boxes drawn
     return draw_img
 
-def convert_color(img, conv='RGB2YCrCb'):
-    if conv == 'RGB2YCrCb':
-        return cv2.cvtColor(img, cv2.COLOR_RGB2YCrCb)
-    if conv == 'BGR2YCrCb':
-        return cv2.cvtColor(img, cv2.COLOR_BGR2YCrCb)
-    if conv == 'RGB2LUV':
-        return cv2.cvtColor(img, cv2.COLOR_RGB2LUV)
+def convert_color(image, color_space='YCrCb'):
+    # apply color conversion if other than 'RGB'
+    if color_space != 'RGB':
+        if color_space == 'HSV':
+            conveted_image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+        elif color_space == 'LUV':
+            conveted_image = cv2.cvtColor(image, cv2.COLOR_RGB2LUV)
+        elif color_space == 'HLS':
+            conveted_image = cv2.cvtColor(image, cv2.COLOR_RGB2HLS)
+        elif color_space == 'YUV':
+            conveted_image = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
+        elif color_space == 'YCrCb':
+            conveted_image = cv2.cvtColor(image, cv2.COLOR_RGB2YCrCb)
+        elif color_space == 'GRAY':
+            conveted_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+    else:
+        conveted_image = np.copy(image)
+    return conveted_image
 
 def bin_spatial(img, size=(32, 32)):
     color1 = cv2.resize(img[:,:,0], size).ravel()
@@ -138,7 +149,7 @@ def color_hist(img, nbins=32):    #bins_range=(0, 256)
     return hist_features
 
 # Define a single function that can extract features using hog sub-sampling and make predictions
-def find_cars(img, ystarts, ystops, scales, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
+def find_cars(img, color_space, ystarts, ystops, scales, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
     
     # Create a list of bounding boxes to identify cars
     car_boxes = []
@@ -149,7 +160,7 @@ def find_cars(img, ystarts, ystops, scales, svc, X_scaler, orient, pix_per_cell,
     for scale, ystart, ystop in zip(scales,ystarts,ystops):
         print("scale:",scale)
         img_tosearch = img[ystart:ystop,:,:]
-        ctrans_tosearch = convert_color(img_tosearch, conv='RGB2YCrCb')
+        ctrans_tosearch = convert_color(img_tosearch, color_space=color_space)
         if scale != 1:
             imshape = ctrans_tosearch.shape
             ctrans_tosearch = cv2.resize(ctrans_tosearch, (np.int(imshape[1]/scale), np.int(imshape[0]/scale)))
