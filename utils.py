@@ -1,6 +1,7 @@
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 import cv2
+import numpy as np
 
 def plot_images (images, table_size, fig_size = (10, 10), cmap=None, titles=None, fontsize=16):
     """Shows images in a table
