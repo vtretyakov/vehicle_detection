@@ -162,7 +162,7 @@ def find_cars(img, color_space, ystarts, ystops, scales, svc, X_scaler, hog_chan
     # Create a list of bounding boxes to identify cars
     car_boxes = []
 
-    img = img.astype(np.float32)/255
+    #img = img.astype(np.float32)/255
     
     # Search for cars on various scales
     for scale, ystart, ystop in zip(scales,ystarts,ystops):
