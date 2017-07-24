@@ -71,12 +71,12 @@ if show_plot == True:
 
 # parameters of feature extraction
 color_space = 'GRAY' # Can be GRAY, RGB, HSV, LUV, HLS, YUV, YCrCb
-orient = 16  # HOG orientations
-pix_per_cell = 16 # HOG pixels per cell
+orient = 32  # HOG orientations
+pix_per_cell = 8 # HOG pixels per cell
 cell_per_block = 2 # HOG cells per block
 hog_channel = 'ALL' # Can be 0, 1, 2, or "ALL"
 spatial_size = (16, 16) # Spatial binning dimensions
-hist_bins = 32    # Number of histogram bins
+hist_bins = 16    # Number of histogram bins
 spatial_feat = True # Spatial features on or off
 hist_feat = True # Histogram features on or off
 hog_feat = True # HOG features on or off
@@ -155,9 +155,9 @@ def running_average(buffer, current_value):
     return average
 
 #define sliding window search parameters
-ystarts = [ 400, 400, 450]
-ystops =  [ 500, 550, 656]
-scales =  [ 1.0, 1.5, 2.0]
+ystarts = [ 360, 380, 380]
+ystops =  [ 500, 550, 670]
+scales =  [ 1.0, 1.5, 2.5]
 #ystarts = [ 400, 450]
 #ystops =  [ 500, 656]
 #scales =  [ 1.0, 2.0]
