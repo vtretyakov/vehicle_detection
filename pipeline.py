@@ -217,19 +217,18 @@ if record_video == True:
     new_clip.write_videofile("project_video_processed.mp4", audio=False)
 else:
     #load test image
-    image = mpimg.imread('test_images/test5.jpg')
-    for i in range(0,20):
+    images = glob.glob('test_images/*.jpg')
+    #image = mpimg.imread('test_images/test3.jpg')
+    for image_path in images:
+        image = mpimg.imread(image_path)
         draw_img, heatmap = process_image(image)
-
-    
-
-    fig = plt.figure()
-    plt.subplot(121)
-    plt.imshow(draw_img)
-    plt.title('Car Positions')
-    plt.subplot(122)
-    plt.imshow(heatmap, cmap='hot')
-    plt.title('Heat Map')
-    fig.tight_layout()
-    plt.show ()
+        fig = plt.figure()
+        plt.subplot(121)
+        plt.imshow(draw_img)
+        plt.title('Car Positions')
+        plt.subplot(122)
+        plt.imshow(heatmap, cmap='hot')
+        plt.title('Heat Map')
+        fig.tight_layout()
+        plt.show ()
 
