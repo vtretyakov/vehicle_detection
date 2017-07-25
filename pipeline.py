@@ -17,14 +17,18 @@ from sklearn.preprocessing import StandardScaler
 from scipy.ndimage.measurements import label
 from moviepy.editor import VideoFileClip
 
-show_plot = True
-record_video = False
+record_video = True
+
+if record_video == True:
+    show_plot = False
+else:
+    show_plot = True
 
 # Read in cars and notcars
-#cars = glob.glob('training_data/vehicles/**/*.png', recursive=True)
-#notcars = glob.glob('training_data/non-vehicles/**/*.png', recursive=True)
-cars = glob.glob('training_data_subset/vehicles_smallset/**/*.jpeg', recursive=True)
-notcars = glob.glob('training_data_subset/non-vehicles_smallset/**/*.jpeg', recursive=True)
+cars = glob.glob('training_data/vehicles/**/*.png', recursive=True)
+notcars = glob.glob('training_data/non-vehicles/**/*.png', recursive=True)
+#cars = glob.glob('training_data_subset/vehicles_smallset/**/*.jpeg', recursive=True)
+#notcars = glob.glob('training_data_subset/non-vehicles_smallset/**/*.jpeg', recursive=True)
 
 # load car images
 car_images = []
@@ -43,12 +47,17 @@ for image_path in notcars:
     if image_path.endswith('.png'):
         image = cv2.imread(image_path)
         augmented_image = cv2.flip(image,1)
+        augmented_image2 = cv2.flip(image,0)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        augmented_image = cv2.cvtColor(augmented_image, cv2.COLOR_BGR2RGB)
+        augmented_image2 = cv2.cvtColor(augmented_image2, cv2.COLOR_BGR2RGB)
     else:
         image = mpimg.imread(image_path)
         augmented_image = cv2.flip(image,1)
+        augmented_image2 = cv2.flip(image,0)
     notcar_images.append(image)
     notcar_images.append(augmented_image)
+    notcar_images.append(augmented_image2)
 
 car_images_count = len(car_images)
 notcar_images_count = len(notcar_images)
@@ -145,6 +154,10 @@ print('Test Accuracy of SVC = ', round(svc.score(X_test, y_test), 4))
 # Check the prediction time for a single sample
 t=time.time()
 
+#circular buffer
+heat_buffer = collections.deque(maxlen=20)#20
+accurate_bbox_list = []
+
 
 def running_average(buffer, current_value):
     buffer.append(current_value)
@@ -176,30 +189,21 @@ def process_image(image):
     
     #shape = image.shape[0], image.shape[1]
     heat = np.zeros_like(image[:,:,0]).astype(np.float)
+    #print (image[:,:,0].shape)#(720, 1280)
 
     # Add heat to each box in box list
     heat = add_heat(heat,car_boxes)
     heat = running_average(heat_buffer, heat)
 
     # Apply threshold to help remove false positives
-    heat = apply_threshold(heat,2)
+    heat = apply_threshold(heat,5)#5 is the best so far with 20 filter length combination
 
     # Visualize the heatmap when displaying
     heatmap = np.clip(heat, 0, 255)
 
     # Find final boxes from heatmap using label function
     labels = label(heatmap)
- 
-    if record_video == False:
-        for car_number in range(1, labels[1]+1):
-            # Find pixels with each car_number label value
-            nonzero = (labels[0] == car_number).nonzero()
-            # Identify x and y values of those pixels
-            nonzeroy = np.array(nonzero[0])
-            nonzerox = np.array(nonzero[1])
-            print (nonzeroy,nonzerox)
 
-    
     draw_img = draw_labeled_bboxes(np.copy(image), labels)
 
     if record_video == True:
