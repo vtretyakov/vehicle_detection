@@ -24,8 +24,9 @@ def apply_threshold(heatmap, threshold):
     # Return thresholded map
     return heatmap
 
-def draw_labeled_bboxes(img, labels):
+def draw_labeled_bboxes(img, labels, bbox_buffer):
     min_size_box_x, min_size_box_y = 70, 70   # min size of a detected box to avoid noise
+    good_boxes = []
     # Iterate through all detected cars
     for car_number in range(1, labels[1]+1):
         # Find pixels with each car_number label value
@@ -38,10 +39,40 @@ def draw_labeled_bboxes(img, labels):
         # Draw the box on the image
         # check that the detected box is large enough and not just likely an error
         if (np.max(nonzerox) - np.min(nonzerox) > min_size_box_x) and (np.max(nonzeroy) - np.min(nonzeroy) > min_size_box_y):
-            cv2.rectangle(img, bbox[0], bbox[1], (0,0,255), 6)
-                #cv2.circle(img,((bbox[1][0]+bbox[0][0])//2,(bbox[1][1]+bbox[0][1])//2), 20, (255,0,0), -1)
-            font = cv2.FONT_HERSHEY_SIMPLEX
-            cv2.putText(img,"{0:d}".format(car_number),((bbox[0][0]+bbox[1][0])//2,(bbox[0][1]+bbox[1 ][1])//2), font, 1,(255,255,255),2)
+            #cv2.rectangle(img, bbox[0], bbox[1], (0,0,255), 6)
+            #cv2.circle(img,((bbox[1][0]+bbox[0][0])//2,(bbox[1][1]+bbox[0][1])//2), 20, (255,0,0), -1)
+            #font = cv2.FONT_HERSHEY_SIMPLEX
+            #cv2.putText(img,"{0:d}".format(car_number),((bbox[0][0]+bbox[1][0])//2,(bbox[0][1]+bbox[1 ][1])//2), font, 1,(255,255,255),2)
+            good_boxes.append(bbox)
+
+    sorted_bbox = sorted(good_boxes, key=min)
+    cars_detected = len(sorted_bbox)
+    print("there are ",cars_detected," cars")
+    
+    
+    
+    if bbox_buffer[0] != None:
+        incr = 0
+        for each_box_coord in sorted_bbox:
+            #find center of the box
+            center = (each_box_coord[0][0]+each_box_coord[1][0])//2,(each_box_coord[0][1]+each_box_coord[1][1])//2
+            print("current ", each_box_coord, center)
+            #find the previous center
+            center_old = (bbox_buffer[incr][0][0]+bbox_buffer[incr][1][0])//2,(bbox_buffer[incr][0][1]+bbox_buffer[incr][1][1])//2
+            print("old ", bbox_buffer[incr], center_old)
+            incr += 1
+    else:
+        print("adding first car(s)")
+        for i in range (cars_detected):
+            bbox_buffer[i] = sorted_bbox[i] #first readings
+
+    incr = 0
+    for c1, c2 in sorted_bbox:
+        incr += 1
+        cv2.rectangle(img, c1, c2, (0,0,255), 6)
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        cv2.putText(img,"{0:d}".format(incr),((c1[0]+c2[0])//2,(c1[1]+c2[1])//2), font, 1,(255,255,255),2)
+
     # Return the image
     return img
 

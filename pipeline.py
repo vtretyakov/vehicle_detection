@@ -17,7 +17,7 @@ from sklearn.preprocessing import StandardScaler
 from scipy.ndimage.measurements import label
 from moviepy.editor import VideoFileClip
 
-record_video = True
+record_video = False
 
 if record_video == True:
     show_plot = False
@@ -25,10 +25,10 @@ else:
     show_plot = True
 
 # Read in cars and notcars
-cars = glob.glob('training_data/vehicles/**/*.png', recursive=True)
-notcars = glob.glob('training_data/non-vehicles/**/*.png', recursive=True)
-#cars = glob.glob('training_data_subset/vehicles_smallset/**/*.jpeg', recursive=True)
-#notcars = glob.glob('training_data_subset/non-vehicles_smallset/**/*.jpeg', recursive=True)
+#cars = glob.glob('training_data/vehicles/**/*.png', recursive=True)
+#notcars = glob.glob('training_data/non-vehicles/**/*.png', recursive=True)
+cars = glob.glob('training_data_subset/vehicles_smallset/**/*.jpeg', recursive=True)
+notcars = glob.glob('training_data_subset/non-vehicles_smallset/**/*.jpeg', recursive=True)
 
 # load car images
 car_images = []
@@ -36,9 +36,12 @@ for image_path in cars:
     if image_path.endswith('.png'):
         image = cv2.imread(image_path)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        #augmented_image = cv2.flip(image,1)
     else:
         image = mpimg.imread(image_path)
+        #augmented_image = cv2.flip(image,1)
     car_images.append(image)
+    #car_images.append(augmented_image)
 
 # load non-car images
 notcar_images = []
@@ -46,11 +49,9 @@ notcar_images = []
 for image_path in notcars:
     if image_path.endswith('.png'):
         image = cv2.imread(image_path)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         augmented_image = cv2.flip(image,1)
         augmented_image2 = cv2.flip(image,0)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        augmented_image = cv2.cvtColor(augmented_image, cv2.COLOR_BGR2RGB)
-        augmented_image2 = cv2.cvtColor(augmented_image2, cv2.COLOR_BGR2RGB)
     else:
         image = mpimg.imread(image_path)
         augmented_image = cv2.flip(image,1)
@@ -84,8 +85,8 @@ orient = 32  # HOG orientations
 pix_per_cell = 8 # HOG pixels per cell
 cell_per_block = 2 # HOG cells per block
 hog_channel = 'ALL' # Can be 0, 1, 2, or "ALL"
-spatial_size = (16, 16) # Spatial binning dimensions
-hist_bins = 16    # Number of histogram bins
+spatial_size = (8, 8) # Spatial binning dimensions
+hist_bins = 8    # Number of histogram bins
 spatial_feat = True # Spatial features on or off
 hist_feat = True # Histogram features on or off
 hog_feat = True # HOG features on or off
@@ -156,6 +157,7 @@ t=time.time()
 
 #circular buffer
 heat_buffer = collections.deque(maxlen=20)#20
+bbox_buffer = [None] * 10
 accurate_bbox_list = []
 
 
@@ -204,7 +206,7 @@ def process_image(image):
     # Find final boxes from heatmap using label function
     labels = label(heatmap)
 
-    draw_img = draw_labeled_bboxes(np.copy(image), labels)
+    draw_img = draw_labeled_bboxes(np.copy(image), labels, bbox_buffer)
 
     if record_video == True:
         return draw_img
