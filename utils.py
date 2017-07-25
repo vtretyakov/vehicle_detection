@@ -61,3 +61,11 @@ def convert_colorspace(image, cspace='RGB', channel='ALL'):
         return conv_img
     else:
         return conv_img [:,:,channel]
+
+def running_average(buffer, current_value):
+    buffer.append(current_value)
+    average = np.zeros((720, 1280)).astype(np.float)
+    for i in range(len(buffer)):
+        average += buffer[i]
+    average = average/len(buffer)
+    return average

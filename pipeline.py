@@ -36,9 +36,11 @@ for image_path in cars:
     if image_path.endswith('.png'):
         image = cv2.imread(image_path)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        #augmented_image = cv2.bitwise_not(image)
     else:
         image = mpimg.imread(image_path)
     car_images.append(image)
+    #car_images.append(augmented_image)
 
 # load non-car images
 notcar_images = []
@@ -79,13 +81,13 @@ if show_plot == True:
     plot_images(example_images, (4, 2), fig_size=(10, 5),titles=titles)
 
 # parameters of feature extraction
-color_space = 'GRAY' # Can be GRAY, RGB, HSV, LUV, HLS, YUV, YCrCb
+color_space = 'YCrCb' # Can be GRAY, RGB, HSV, LUV, HLS, YUV, YCrCb
 orient = 32  # HOG orientations
 pix_per_cell = 8 # HOG pixels per cell
 cell_per_block = 2 # HOG cells per block
-hog_channel = 'ALL' # Can be 0, 1, 2, or "ALL"
+hog_channel = 0 # Can be 0, 1, 2, or "ALL"
 spatial_size = (16, 16) # Spatial binning dimensions
-hist_bins = 16    # Number of histogram bins
+hist_bins = 32    # Number of histogram bins
 spatial_feat = True # Spatial features on or off
 hist_feat = True # Histogram features on or off
 hog_feat = True # HOG features on or off
@@ -154,26 +156,13 @@ print('Test Accuracy of SVC = ', round(svc.score(X_test, y_test), 4))
 # Check the prediction time for a single sample
 t=time.time()
 
-#circular buffer
-heat_buffer = collections.deque(maxlen=20)#20
-accurate_bbox_list = []
-
-
-def running_average(buffer, current_value):
-    buffer.append(current_value)
-    average = np.zeros((720, 1280)).astype(np.float)
-    for i in range(len(buffer)):
-        average += buffer[i]
-    average = average/len(buffer)
-    return average
+#circular buffer for filtering
+heat_buffer = collections.deque(maxlen=25)#20
 
 #define sliding window search parameters
 ystarts = [ 360, 380, 380]
 ystops =  [ 500, 550, 670]
 scales =  [ 1.0, 1.5, 2.5]
-#ystarts = [ 400, 450]
-#ystops =  [ 500, 656]
-#scales =  [ 1.0, 2.0]
 
 def process_image(image):
 
@@ -187,9 +176,7 @@ def process_image(image):
     #plt.imshow(out_img)
     #plt.show ()
     
-    #shape = image.shape[0], image.shape[1]
     heat = np.zeros_like(image[:,:,0]).astype(np.float)
-    #print (image[:,:,0].shape)#(720, 1280)
 
     # Add heat to each box in box list
     heat = add_heat(heat,car_boxes)
@@ -212,11 +199,9 @@ def process_image(image):
         return draw_img, heatmap
 
 
-
-
-
+#Video processing
 if record_video == True:
-    clip = VideoFileClip("project_video.mp4")#.subclip(38,43)#.subclip(20,25)
+    clip = VideoFileClip("project_video.mp4")#.subclip(24,30)#.subclip(20,25)
     new_clip = clip.fl_image( process_image )
     new_clip.write_videofile("project_video_processed.mp4", audio=False)
 else:

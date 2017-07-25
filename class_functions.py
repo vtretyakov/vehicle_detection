@@ -25,7 +25,8 @@ def apply_threshold(heatmap, threshold):
     return heatmap
 
 def draw_labeled_bboxes(img, labels):
-    min_size_box_x, min_size_box_y = 70, 70   # min size of a detected box to avoid noise
+    min_size_box_x, min_size_box_y = 60, 60   # min size of a detected box to avoid noise
+    good_boxes = []
     # Iterate through all detected cars
     for car_number in range(1, labels[1]+1):
         # Find pixels with each car_number label value
@@ -38,10 +39,16 @@ def draw_labeled_bboxes(img, labels):
         # Draw the box on the image
         # check that the detected box is large enough and not just likely an error
         if (np.max(nonzerox) - np.min(nonzerox) > min_size_box_x) and (np.max(nonzeroy) - np.min(nonzeroy) > min_size_box_y):
-            cv2.rectangle(img, bbox[0], bbox[1], (0,0,255), 6)
-                #cv2.circle(img,((bbox[1][0]+bbox[0][0])//2,(bbox[1][1]+bbox[0][1])//2), 20, (255,0,0), -1)
-            font = cv2.FONT_HERSHEY_SIMPLEX
-            cv2.putText(img,"{0:d}".format(car_number),((bbox[0][0]+bbox[1][0])//2,(bbox[0][1]+bbox[1 ][1])//2), font, 1,(255,255,255),2)
+            good_boxes.append(bbox)
+                
+    sorted_bbox = sorted(good_boxes, key=min)
+    incr = 0
+    for c1, c2 in sorted_bbox:
+        incr += 1
+        cv2.rectangle(img, c1, c2, (0,0,255), 6)
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        cv2.putText(img,"{0:d}".format(incr),((c1[0]+c2[0])//2,(c1[1]+c2[1])//2), font, 1,(255,255,255),2)
+    
     # Return the image
     return img
 
