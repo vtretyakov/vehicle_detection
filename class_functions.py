@@ -25,7 +25,7 @@ def apply_threshold(heatmap, threshold):
     return heatmap
 
 def draw_labeled_bboxes(img, labels):
-    min_size_box_x, min_size_box_y = 60, 60   # min size of a detected box to avoid noise
+    min_size_box_x, min_size_box_y = 40, 40   # min size of a detected box to avoid noise
     good_boxes = []
     # Iterate through all detected cars
     for car_number in range(1, labels[1]+1):

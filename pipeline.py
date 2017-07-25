@@ -183,7 +183,7 @@ def process_image(image):
     heat = running_average(heat_buffer, heat)
 
     # Apply threshold to help remove false positives
-    heat = apply_threshold(heat,5)#5 is the best so far with 20 filter length combination
+    heat = apply_threshold(heat,4)#5 is the best so far with 20 filter length combination
 
     # Visualize the heatmap when displaying
     heatmap = np.clip(heat, 0, 255)
